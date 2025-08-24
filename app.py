@@ -91,7 +91,6 @@ from flask_cors import CORS
 import os
 import logging
 from agent_orchestrator import AgentOrchestrator
-import tempfile
 
 
 # Configure logging
@@ -109,8 +108,12 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 
 app.config['SESSION_TYPE'] = 'filesystem' # Store the session data on server side filesystem
 app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_FILE_DIR'] = tempfile.mkdtemp() # Optional: you can specify the session file location
+# app.config['SESSION_FILE_DIR'] = tempfile.mkdtemp() # Optional: you can specify the session file location
 app.config['SESSION_USE_SIGNER'] = True # Sign the session identifiers for security
+
+session_dir = os.path.join("/tmp", ".flask_session")
+os.makedirs(session_dir, exist_ok=True)
+app.config['SESSION_FILE_DIR'] = session_dir
 
 Session(app)
 
