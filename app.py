@@ -102,6 +102,7 @@ logging.basicConfig(
 
 app = Flask(__name__)
 CORS(app, resources={r"/chat": {"origins": "*"}}, supports_credentials=True)
+CORS(app, supports_credentials=True)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 
