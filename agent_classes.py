@@ -1,7 +1,7 @@
 import os
 import logging
 import glob
-import ollama
+# import ollama
 import requests
 import certifi
 import urllib3
@@ -13,7 +13,8 @@ from openai import OpenAI
 from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
+# from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 
 # Disable only insecure request warnings for UTAR's SSL issue
@@ -23,11 +24,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 load_dotenv()
 
 # Openai setup
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+chat_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_CHAT"))
+embedding_model = OpenAIEmbeddings(
+    model="text-embedding-3-large",
+    api_key=os.getenv("OPENAI_API_KEY_EMBED")
+    )
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
 # Ollama embeddings
-EMBEDDING_MODEL = "mxbai-embed-large"
+# EMBEDDING_MODEL = "mxbai-embed-large"
 
 # Setup logging
 logging.basicConfig(
@@ -118,7 +123,7 @@ class BaseAgent:
         Handles UTAR's broken SSL for PDFs specifically.
         """
         print("Looking for PDF files in some UTAR Webpages to download...")
-        print("base_folder", base_folder)
+        # print("base_folder", base_folder)
         print("department", department)
         download_folder = os.path.join(base_folder, department)
         os.makedirs(download_folder, exist_ok=True)
@@ -208,9 +213,10 @@ class BaseAgent:
         try:
             if os.path.exists(self.vector_db_path):
                 print(f"Loading vector database for {self.department} from {self.vector_db_path}...")
+
                 vector_database = Chroma(
                     persist_directory=self.vector_db_path, 
-                    embedding_function=OllamaEmbeddings(model=EMBEDDING_MODEL)
+                    embedding_function=embedding_model
                 )
             else:
                 print(f"Creating vector database for {self.department}...")
@@ -241,11 +247,9 @@ class BaseAgent:
                     print("Metadata:", chunk.metadata)
                     print("------")
 
-                ollama.pull(EMBEDDING_MODEL)
-
                 vector_database = Chroma.from_documents(
                     documents=chunks,
-                    embedding=OllamaEmbeddings(model=EMBEDDING_MODEL),
+                    embedding=embedding_model,
                     persist_directory=self.vector_db_path
                 )
 
@@ -324,7 +328,7 @@ class AdmissionsAgent(BaseAgent):
         """
         
         try:
-            response = client.chat.completions.create(
+            response = chat_client.chat.completions.create(
                 model=OPENAI_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "You are a helpful university admissions assistant."},
@@ -391,7 +395,7 @@ class FinanceAgent(BaseAgent):
         """
         
         try:
-            response = client.chat.completions.create(
+            response = chat_client.chat.completions.create(
                 model=OPENAI_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "You are a precise university financial advisor."},
@@ -471,7 +475,7 @@ class ExaminationAgent(BaseAgent):
         """
         
         try:
-            response = client.chat.completions.create(
+            response = chat_client.chat.completions.create(
                 model=OPENAI_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "You are a helpful university academic coordinator."},
@@ -529,7 +533,7 @@ class GeneralAgent(BaseAgent):
         """
         
         try:
-            response = client.chat.completions.create(
+            response = chat_client.chat.completions.create(
                 model=OPENAI_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "You are a helpful university information assistant."},

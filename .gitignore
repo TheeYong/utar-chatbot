@@ -1,4 +1,12 @@
 venv/
 __pycache__/
 .flask_session/
+*.pyc
 *.env
+vector_db/
+vector_db(1)/
+vector_db(2)/
+chatbot_debug.log
+# Node build files (React)
+chatbot-ui/node_modules/
+chatbot-ui/build/

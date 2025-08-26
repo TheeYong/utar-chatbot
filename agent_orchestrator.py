@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+chat_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_CHAT"))
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
 class AgentOrchestrator:
@@ -87,7 +87,7 @@ class AgentOrchestrator:
             """
             
             # Call the LLM to determine the appropriate agent
-            response = client.chat.completions.create(
+            response = chat_client.chat.completions.create(
                 model=OPENAI_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "You are a helpful router assistant that determines which specialized agent should handle a query."},
