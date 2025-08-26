@@ -7,7 +7,7 @@ def scrape_utar_page(urls):
     results = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(headless=True)
 
         for url in urls:
             page = browser.new_page()
