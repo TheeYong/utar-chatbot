@@ -3,7 +3,7 @@ __pycache__/
 .flask_session/
 *.pyc
 *.env
-vector_db/
+Not used/
 vector_db(1)/
 vector_db(2)/
 chatbot_debug.log
