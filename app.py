@@ -102,7 +102,7 @@ logging.basicConfig(
 
 app = Flask(__name__)
 # CORS(app, resources={r"/chat": {"origins": "*"}}, supports_credentials=True)
-CORS(app, supports_credentials=True)
+CORS(app, origins=["https://utar-chatbot-web.web.app"], supports_credentials=True)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 
@@ -125,7 +125,7 @@ print("Starting preloading of all department vector databases...")
 agent_orchestrator.preload_all_databases()
 print("Preloading complete")
 
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
     try:
         data = request.get_json()
