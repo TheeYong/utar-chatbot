@@ -102,7 +102,8 @@ logging.basicConfig(
 
 app = Flask(__name__)
 # CORS(app, resources={r"/chat": {"origins": "*"}}, supports_credentials=True)
-CORS(app, origins=["https://utar-chatbot-web.web.app"], supports_credentials=True)
+# CORS(app, origins=["https://utar-chatbot-web.web.app"], supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "https://utar-chatbot-web.web.app"}}, supports_credentials=True)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 
@@ -121,23 +122,33 @@ Session(app)
 agent_orchestrator = AgentOrchestrator()
 
 # Load all vector databases at startup
-print("Starting preloading of all department vector databases...")
+logging.info("Starting preloading of all department vector databases...")
 agent_orchestrator.preload_all_databases()
-print("Preloading complete")
+logging.info("Preloading complete")
+
+@app.route("/", methods=["GET"])
+def home():
+    """Root health check route."""
+    return jsonify({"status": "ok", "message": "UTAR Chatbot Backend Running"}), 200
 
 @app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
+    """Main chatbot endpoint."""
+    if request.method == "OPTIONS":
+        # Handle CORS preflight
+        return jsonify({"status": "ok"}), 200
+
     try:
-        data = request.get_json()
-        query = data.get('question')
+        data = request.get_json(force=True)
+        query = data.get('question', '').strip()
+
+        if not query:
+            return jsonify({'error': 'No question provided'}), 400
         # Get the conversation history or create a new empty one
         history = session.get('chat_history', [])
         
         # Add user's message to the conversation history
         history.append({'role':'user', 'content':query})
-
-        if not query:
-            return jsonify({'error': 'No question provided'}), 400
         
         # Process the query through the agent orchestrator
         result = agent_orchestrator.process_query(query, history)
@@ -156,10 +167,10 @@ def chat():
                 'name': result['agent_name'],
                 'description': result['agent_description']
             }
-        })
+        }), 200
     except Exception as e:
-        logging.error(f"Error in chat endpoint: {e}")
-        return jsonify({'response': f"An error occurred while processing your question. Please try again later."})
+        logging.error(f"Error in chat endpoint: {e}", exc_info=True)
+        return jsonify({'response': f"An error occurred while processing your question. Please try again later."}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -167,6 +178,7 @@ def health_check():
     return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    # app.run(port=5000)
+    app.run(host="0.0.0.0", port=10000)
+    # port = int(os.environ.get("PORT", 5000))
+    # app.run(host="0.0.0.0", port=port)
+    # # app.run(port=5000)
